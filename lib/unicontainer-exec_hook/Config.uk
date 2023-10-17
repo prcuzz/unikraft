@@ -1,0 +1,6 @@
+menuconfig CONFIG_LIBEXECHOOK
+	bool "exec_hook: hook exec and transfer control flow to the hypervisor"
+	default n
+	select LIBSYSCALL_SHIM
+	help
+		This library is used to handle exec intercepts to implement the functionality of unicontainer.

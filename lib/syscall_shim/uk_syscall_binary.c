@@ -91,6 +91,14 @@ void ukplat_syscall_handler(struct __regs *r)
 		    uk_syscall_name(r->rsyscall), r->rsyscall,
 		    (void *) r->rip, r->rarg0, r->rarg1);
 #endif /* CONFIG_LIBSYSCALL_SHIM_DEBUG_HANDLER */
+
+#ifdef CONFIG_LIBEXECHOOK
+	// zzc: If we capture execve here, we jump to the library exec_hook that we added
+	if(r->rsyscall == SYS_execve){
+		exec_hook();
+	}
+#endif /* CONFIG_LIBEXECHOOK */
+
 	r->rret0 = uk_syscall6_r(r->rsyscall,
 				 r->rarg0, r->rarg1, r->rarg2,
 				 r->rarg3, r->rarg4, r->rarg5);

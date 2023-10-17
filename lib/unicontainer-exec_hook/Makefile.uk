@@ -1,0 +1,3 @@
+$(eval $(call addlib_s,libexechook,$(CONFIG_LIBEXECHOOK)))
+
+LIBEXECHOOK_SRCS-y += $(LIBEXECHOOK_BASE)/exec_hook.c
