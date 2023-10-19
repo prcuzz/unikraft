@@ -97,7 +97,7 @@ void ukplat_syscall_handler(struct __regs *r)
 #if CONFIG_LIBEXECHOOK
 	// zzc: If we capture execve here, we jump to the library exec_hook that we added
 	if(r->rsyscall == SYS_execve){
-		exec_hook();
+		exec_hook(r);
 	}
 #endif /* CONFIG_LIBEXECHOOK */
 
