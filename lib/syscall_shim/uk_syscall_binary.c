@@ -47,6 +47,8 @@
 #include <uk/plat/console.h> /* ukplat_coutk */
 #endif /* CONFIG_LIBSYSCALL_SHIM_STRACE */
 
+
+
 void ukplat_syscall_handler(struct __regs *r)
 {
 #if CONFIG_LIBSYSCALL_SHIM_HANDLER_ULTLS
@@ -92,7 +94,7 @@ void ukplat_syscall_handler(struct __regs *r)
 		    (void *) r->rip, r->rarg0, r->rarg1);
 #endif /* CONFIG_LIBSYSCALL_SHIM_DEBUG_HANDLER */
 
-#ifdef CONFIG_LIBEXECHOOK
+#if CONFIG_LIBEXECHOOK
 	// zzc: If we capture execve here, we jump to the library exec_hook that we added
 	if(r->rsyscall == SYS_execve){
 		exec_hook();

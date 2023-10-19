@@ -1,4 +1,4 @@
-menuconfig CONFIG_LIBEXECHOOK
+menuconfig LIBEXECHOOK
 	bool "exec_hook: hook exec and transfer control flow to the hypervisor"
 	default n
 	select LIBSYSCALL_SHIM
