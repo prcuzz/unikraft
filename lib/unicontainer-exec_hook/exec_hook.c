@@ -20,12 +20,14 @@
 int exec_hook(struct __regs *r){
     uk_pr_warn("[unicontainer]ZZZZZZZZZZZZZZZZZZZZZZZZZC\n");
     uk_pr_warn("[unicontainer]syscall number:%lu, arg0:%lu, arg1:%lu, arg2:%lu\n", r->rax, r->rdi, r->rsi, r->rdx);
-    uk_pr_warn("[unicontainer]%c\n", *((char**)r->rdi));
+    uk_pr_warn("[unicontainer]argv[0]: %s\n", (*(char**)(r->rsi)));
+    uk_pr_warn("[unicontainer]envp[0]: %s\n", (*(char**)(r->rdx)));
     uk_pr_warn("[unicontainer]argv: ");
-    int i = 0;
-    while (*((char**)(r->rdi)+i) != NULL)
+    unsigned int i = 0;
+    while (*((char**)(r->rsi)+i) != 0)
     {
-        uk_pr_warn("%s ", ((char**)(r->rdi)+i));
+        // uk_pr_warn("%lu ", (*((char**)(r->rsi)+i)));
+        uk_pr_warn("%s ", (*((char**)(r->rsi)+i)));
         i++;
     }
     uk_pr_warn("\n");
