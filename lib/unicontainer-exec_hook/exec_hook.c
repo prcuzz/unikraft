@@ -13,7 +13,19 @@
 // VMCALL parameter: rbx, rcx, rdx, rsi
 
 #define NULL (0)
-#define VMCALL_UNICONTAINER_EXEC 12
+#define KVM_HC_CLOCK_PAIRING		9
+#define VMCALL_UNICONTAINER_EXEC 	90
+
+static inline long kvm_hypercall2(unsigned int nr, unsigned long p1,
+                  unsigned long p2)
+{
+    long ret;
+    asm volatile("vmcall"
+             : "=a"(ret)
+             : "a"(nr), "b"(p1), "c"(p2)
+             : "memory");
+    return ret;
+}
 
 static inline long kvm_hypercall3(unsigned int nr, unsigned long p1,
                   unsigned long p2, unsigned long p3)
@@ -46,7 +58,10 @@ int exec_hook(struct __regs *r){
     }
     uk_pr_warn("\n");
 
-    kvm_hypercall3(r->rax, r->rdi, r->rsi, r->rdx);
-    
+    long ret;
+    // ret = kvm_hypercall2(KVM_HC_CLOCK_PAIRING, 0, 0);
+    ret = kvm_hypercall3(VMCALL_UNICONTAINER_EXEC, r->rdi, r->rsi, r->rdx);
+    uk_pr_warn("[unicontainer]return value from kvm vmcall: %ld\n", ret);
+
     return 0;
 }
