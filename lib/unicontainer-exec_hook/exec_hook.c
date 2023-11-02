@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <uk/print.h>
 #include <uk/arch/lcpu.h>
 
@@ -63,5 +64,6 @@ int exec_hook(struct __regs *r){
     ret = kvm_hypercall3(VMCALL_UNICONTAINER_EXEC, r->rdi, r->rsi, r->rdx);
     uk_pr_warn("[unicontainer]return value from kvm vmcall: %ld\n", ret);
 
+    UK_CRASH("[unicontainer]Exiting\n");
     return 0;
 }
