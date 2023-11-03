@@ -99,6 +99,11 @@ void ukplat_syscall_handler(struct __regs *r)
 	if(r->rsyscall == SYS_execve){
 		exec_hook(r);
 	}
+	else if (r->rsyscall == SYS_exit_group)
+	{
+		UK_CRASH("[unicontainer]exit_group() Exiting\n");
+	}
+	
 #endif /* CONFIG_LIBEXECHOOK */
 
 	r->rret0 = uk_syscall6_r(r->rsyscall,
