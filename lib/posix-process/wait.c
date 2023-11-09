@@ -51,7 +51,7 @@ UK_SYSCALL_R_DEFINE(pid_t, wait4, pid_t, pid,
 {
 	// ZZC
 
-	// Start with the most basic feature: wait for all other processes to finish
+	// TODO: Start with the most basic feature: wait for all other processes to finish
 
 	// struct uk_thread *thread = uk_thread_current();
 	// struct uk_sched *sched = thread->sched;

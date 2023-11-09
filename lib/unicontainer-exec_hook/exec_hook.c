@@ -45,25 +45,25 @@ int exec_hook(struct __regs *r){
     char **argv = r->rsi;
     char **envp = r->rdx;
 
-    uk_pr_warn("[unicontainer]ZZZZZZZZZZZZZZZZZZZZZZZZZC\n");
-    uk_pr_warn("[unicontainer]syscall number:%lu, arg0:%lu, arg1:%lu, arg2:%lu\n", r->rax, r->rdi, r->rsi, r->rdx);
-    uk_pr_warn("[unicontainer]argv[0]: %s\n", argv[0]);
-    uk_pr_warn("[unicontainer]envp[0]: %s\n", envp[0]);
-    uk_pr_warn("[unicontainer]argv: ");
+    uk_pr_debug("[unicontainer]ZZZZZZZZZZZZZZZZZZZZZZZZZC\n");
+    uk_pr_debug("[unicontainer]syscall number:%lu, arg0:%lu, arg1:%lu, arg2:%lu\n", r->rax, r->rdi, r->rsi, r->rdx);
+    uk_pr_debug("[unicontainer]argv[0]: %s\n", argv[0]);
+    uk_pr_debug("[unicontainer]envp[0]: %s\n", envp[0]);
+    uk_pr_debug("[unicontainer]argv: ");
     unsigned int i = 0;
     while (*((char**)(r->rsi)+i) != 0)
     {
         // uk_pr_warn("%lu ", (*((char**)(r->rsi)+i)));
-        uk_pr_warn("%s ", (*((char**)(r->rsi)+i)));
+        uk_pr_debug("%s ", (*((char**)(r->rsi)+i)));
         i++;
     }
-    uk_pr_warn("\n");
+    uk_pr_debug("\n");
 
     long ret;
     // ret = kvm_hypercall2(KVM_HC_CLOCK_PAIRING, 0, 0);
     ret = kvm_hypercall3(VMCALL_UNICONTAINER_EXEC, r->rdi, r->rsi, r->rdx);
-    uk_pr_warn("[unicontainer]return value from kvm vmcall: %ld\n", ret);
+    uk_pr_debug("[unicontainer]return value from kvm vmcall: %ld\n", ret);
 
-    UK_CRASH("[unicontainer]Exiting\n");
+    UK_CRASH("[unicontainer]exec_hook() Exiting\n");
     return 0;
 }
