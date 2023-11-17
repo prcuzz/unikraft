@@ -54,6 +54,7 @@ static inline struct schedcoop *uksched2schedcoop(struct uk_sched *s)
 	return __containerof(s, struct schedcoop, sched);
 }
 
+// 这个应该是主要的调度函数？
 static void schedcoop_schedule(struct uk_sched *s)
 {
 	struct schedcoop *c = uksched2schedcoop(s);
@@ -78,8 +79,8 @@ static void schedcoop_schedule(struct uk_sched *s)
 	 *          the current logical CPU. Otherwise, we would have to store
 	 *          the time of the last context switch per logical core.
 	 */
-	prev->exec_time += now - c->ts_prev_switch;
-	c->ts_prev_switch = now;
+	prev->exec_time += now - c->ts_prev_switch;	// 增加当前线程的运行时间
+	c->ts_prev_switch = now;					// 更新最新一次的调度时间
 
 	/* Examine all sleeping threads.
 	 * Wake up expired ones and find the time when the next timeout expires.
@@ -89,38 +90,57 @@ static void schedcoop_schedule(struct uk_sched *s)
 			      queue, tmp) {
 		if (likely(thread->wakeup_time)) {
 			if (thread->wakeup_time <= now)
-				uk_thread_wake(thread);
+				uk_thread_wake(thread);	// 在 sleep_queue 里挨个检查，如果当前时间超过了这个线程的唤醒时间，就唤醒它
 			else if (!min_wakeup_time
 				 || thread->wakeup_time < min_wakeup_time)
-				min_wakeup_time = thread->wakeup_time;
+				min_wakeup_time = thread->wakeup_time;	// 找出 sleep_queue 中最小的唤醒时间
 		}
 	}
 
-	next = UK_TAILQ_FIRST(&c->run_queue);
+	next = UK_TAILQ_FIRST(&c->run_queue);	// 从 run_queue 里取出第一个，当作接下来要执行的线程
+	// ZZC
+	uk_pr_warn("[unicontainer]UK_TAILQ_EMPTY(&c->run_queue) is %u\n", UK_TAILQ_EMPTY(&c->run_queue));
+	uk_pr_warn("[unicontainer]UK_TAILQ_EMPTY(&c->sleep_queue) is %u\n", UK_TAILQ_EMPTY(&c->sleep_queue));
+	uk_pr_warn("[unicontainer]prev is %llu\n", (long long unsigned)prev);
+	uk_pr_warn("[unicontainer]next is %llu\n", (long long unsigned)next);
+	// uk_pr_warn("[unicontainer]UK_TAILQ_FIRST(&c->sleep_queue) is %llu\n", (long long unsigned)UK_TAILQ_FIRST(&c->sleep_queue));
+	// uk_pr_warn("[unicontainer]UK_TAILQ_NEXT(UK_TAILQ_FIRST(&c->sleep_queue), &c->sleep_queue) is %llu\n", (long long unsigned)UK_TAILQ_NEXT(UK_TAILQ_FIRST(&c->sleep_queue), queue));
+	uk_pr_warn("[unicontainer]&c->idle is %llu\n", (long long unsigned)(&c->idle));
+	// ZZC-end
 	if (next) {
 		UK_ASSERT(next != prev);
 		UK_ASSERT(uk_thread_is_runnable(next));
 		UK_ASSERT(!uk_thread_is_exited(next));
 		UK_TAILQ_REMOVE(&c->run_queue, next,
-				queue);
+				queue);						// 如果能取出这个“next”，就把这个线程从 run_queue 中移除
 
 		/* Put previous thread on the end of the list */
 		if ((prev != &c->idle)
 		    && uk_thread_is_runnable(prev)
 		    && !uk_thread_is_exited(prev))
 			UK_TAILQ_INSERT_TAIL(&c->run_queue, prev,
-					     queue);
-	} else if (uk_thread_is_runnable(prev)
+					     queue);			// 把刚刚执行完的这个线程放到 run_queue 的末尾
+	} 
+	// ZZC
+	// 这里还不确定要怎么写…… 
+	// 系统在一开始 run_queue 和 sleep_queue 也都为空，用这个当作判断条件的话系统就跑不起来了……
+	// else if (UK_TAILQ_EMPTY(&c->run_queue) 
+	// 		&& (UK_TAILQ_FIRST(&c->sleep_queue) == &c->idle)) {		
+	// 	UK_CRASH("[unicontainer]schedcoop_schedule() Exiting\n");	
+	// } 
+	// ZZC-end
+	else if (uk_thread_is_runnable(prev)
 		   && !uk_thread_is_exited(prev)) {
-		next = prev;
-	} else {
+		next = prev;						// 如果取不出这个“next”，就看看现在这个还能不能接着跑，能的话，“next”还是它
+	} 
+	else {
 		/*
 		 * Schedule idle thread that will halt the CPU
 		 * We select the idle thread only if we do not have anything
 		 * else to execute
 		 */
-		c->idle_return_time = min_wakeup_time;
-		next = &c->idle;
+		c->idle_return_time = min_wakeup_time;	// 把怠惰进程的返回时间设置为最小唤醒时间（到了这个时间就有线程可以跑了）
+		next = &c->idle;					// 如果取不出这个“next”，现在这个也没法接着跑了，那就跑怠惰进程
 	}
 
 	if (next != prev) {
@@ -139,7 +159,7 @@ static void schedcoop_schedule(struct uk_sched *s)
 	 * interrupted at the return instruction. And therefore at safe point.
 	 */
 	if (prev != next)
-		uk_sched_thread_switch(next);
+		uk_sched_thread_switch(next);	// 如果当前线程和接下来要跑的线程不是同一个，就 switch
 }
 
 static int schedcoop_thread_add(struct uk_sched *s, struct uk_thread *t)
@@ -151,7 +171,7 @@ static int schedcoop_thread_add(struct uk_sched *s, struct uk_thread *t)
 
 	/* Add to run queue if runnable */
 	if (uk_thread_is_runnable(t))
-		UK_TAILQ_INSERT_TAIL(&c->run_queue, t, queue);
+		UK_TAILQ_INSERT_TAIL(&c->run_queue, t, queue);	// 把要添加的线程加入到 run_queue 中
 
 	return 0;
 }
@@ -192,6 +212,8 @@ static void schedcoop_thread_woken(struct uk_sched *s, struct uk_thread *t)
 	}
 }
 
+// 这个就是 idle 进程？
+// 这个函数只会在最开始的时候运行一次，为什么呢？
 static __noreturn void idle_thread_fn(void *argp)
 {
 	struct schedcoop *c = (struct schedcoop *) argp;
@@ -199,6 +221,12 @@ static __noreturn void idle_thread_fn(void *argp)
 	unsigned long flags;
 
 	UK_ASSERT(c);
+
+	// ZZC
+	uk_pr_warn("[unicontainer]idle_thread_fn()\n");
+	uk_pr_warn("[unicontainer]UK_TAILQ_EMPTY(&c->run_queue) is %u\n", UK_TAILQ_EMPTY(&c->run_queue));
+	uk_pr_warn("[unicontainer]UK_TAILQ_EMPTY(&c->sleep_queue) is %u\n", UK_TAILQ_EMPTY(&c->sleep_queue));
+	// ZZC-end
 
 	for (;;) {
 		flags = ukplat_lcpu_save_irqf();
@@ -313,14 +341,14 @@ struct uk_sched *uk_schedcoop_create(struct uk_alloc *a)
 	c->idle.sched = &c->sched;
 
 	uk_sched_init(&c->sched,
-			schedcoop_start,
-			schedcoop_schedule,
+			schedcoop_start,		// start_func
+			schedcoop_schedule,		// yield_func
 			schedcoop_thread_add,
 			schedcoop_thread_remove,
 			schedcoop_thread_blocked,
 			schedcoop_thread_woken,
 			schedcoop_idle_thread,
-			a);
+			a);		// 初始化这个调度器
 
 	/* Add idle thread to the scheduler's thread list */
 	UK_TAILQ_INSERT_TAIL(&c->sched.thread_list, &c->idle, thread_list);

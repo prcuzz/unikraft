@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <uk/print.h>
 #include <uk/arch/lcpu.h>
+#include "exec_hook.h"
 
 // execve definition:
 //      int execve(const char *filename, char *const argv[], char *const envp[]);
@@ -17,6 +18,7 @@
 #define KVM_HC_CLOCK_PAIRING		9
 #define VMCALL_UNICONTAINER_EXEC 	90
 #define DATA_SIZE                   600
+#define SYS_exit_group              94
 
 static inline long kvm_hypercall2(unsigned int nr, unsigned long p1,
                   unsigned long p2)
@@ -62,6 +64,9 @@ int exec_hook(struct __regs *r){
     unsigned int i = 0;
     long ret;
 
+    // if(SYS_exit_group == r->rsyscall){
+    //     UK_CRASH("[unicontainer]exit_group() Exiting\n");
+    // }
 
     uk_pr_debug("[unicontainer]ZZZZZZZZZZZZZZZZZZZZZZZZZC\n");
     uk_pr_debug("[unicontainer]syscall number:%lu, arg0:%lu, arg1:%lu, arg2:%lu\n", r->rax, r->rdi, r->rsi, r->rdx);
@@ -70,7 +75,6 @@ int exec_hook(struct __regs *r){
     uk_pr_debug("[unicontainer]argv: ");
     while (*((char**)(r->rsi)+i) != 0)
     {
-        // uk_pr_warn("%lu ", (*((char**)(r->rsi)+i)));
         uk_pr_debug("%s ", (*((char**)(r->rsi)+i)));
         i++;
     }

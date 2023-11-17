@@ -91,7 +91,7 @@ void uk_sched_thread_switch(struct uk_thread *next)
 
 	UK_ASSERT(prev);
 
-	ukplat_per_lcpu_current(__uk_sched_thread_current) = next;
+	ukplat_per_lcpu_current(__uk_sched_thread_current) = next;	// 相当于修改 current？
 
 	prev->tlsp = ukplat_tlsp_get();
 	if (prev->ectx)

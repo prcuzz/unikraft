@@ -51,14 +51,14 @@ int uk_sched_register(struct uk_sched *s)
 	struct uk_sched *this = uk_sched_head;
 
 	if (!uk_sched_head) {
-		uk_sched_head = s;
+		uk_sched_head = s;	// sched 头没有的话，现在要注册的这个 s 就是头
 		s->next = NULL;
 		return 0;
 	}
 
 	while (this && this->next)
 		this = this->next;
-	this->next = s;
+	this->next = s;			// sched 头已经有了的话，要注册的这个 s 就放到最后
 	s->next = NULL;
 	return 0;
 }

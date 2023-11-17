@@ -962,7 +962,7 @@ void uk_thread_wake(struct uk_thread *thread)
 
 	flags = ukplat_lcpu_save_irqf();
 	if (!uk_thread_is_runnable(thread)) {
-		uk_thread_set_runnable(thread);
+		uk_thread_set_runnable(thread);		// 把这个线程设置为 runnable
 		if (thread->sched)
 			uk_sched_thread_woken(thread);
 	}

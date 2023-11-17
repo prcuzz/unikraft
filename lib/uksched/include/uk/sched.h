@@ -108,7 +108,7 @@ static inline void uk_sched_yield(void)
 
 	s = current->sched;
 	UK_ASSERT(s);
-	s->yield(s);
+	s->yield(s);	// 让出cpu；yield 函数是每个调度器自己注册的，在 schedcoop 中是 schedcoop_schedule 函数
 }
 
 int uk_sched_thread_add(struct uk_sched *s, struct uk_thread *t);

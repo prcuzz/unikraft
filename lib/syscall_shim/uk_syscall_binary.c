@@ -94,17 +94,19 @@ void ukplat_syscall_handler(struct __regs *r)
 		    (void *) r->rip, r->rarg0, r->rarg1);
 #endif /* CONFIG_LIBSYSCALL_SHIM_DEBUG_HANDLER */
 
+// ZZC: If we capture execve here, we jump to the library exec_hook that we added
 #if CONFIG_LIBEXECHOOK
-	// zzc: If we capture execve here, we jump to the library exec_hook that we added
 	if(r->rsyscall == SYS_execve){
 		exec_hook(r);
 	}
 	else if (r->rsyscall == SYS_exit_group)
 	{
-		UK_CRASH("[unicontainer]exit_group() Exiting\n");
+		// UK_CRASH("[unicontainer]exit_group() Exiting\n");
+		// exec_hook(r);
+		;
 	}
-	
 #endif /* CONFIG_LIBEXECHOOK */
+// ZZC-end
 
 	r->rret0 = uk_syscall6_r(r->rsyscall,
 				 r->rarg0, r->rarg1, r->rarg2,
