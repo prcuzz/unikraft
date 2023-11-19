@@ -61,6 +61,8 @@ static void schedcoop_schedule(struct uk_sched *s)
 	struct uk_thread *prev, *next, *thread, *tmp;
 	__snsec now, min_wakeup_time;
 	unsigned long flags;
+	static unsigned int thread_list_size_is_greater_than_2_once = 0;
+	unsigned int thread_list_size = 0;
 
 	if (unlikely(ukplat_lcpu_irqs_disabled()))
 		UK_CRASH("Must not call %s with IRQs disabled\n", __func__);
@@ -98,15 +100,6 @@ static void schedcoop_schedule(struct uk_sched *s)
 	}
 
 	next = UK_TAILQ_FIRST(&c->run_queue);	// 从 run_queue 里取出第一个，当作接下来要执行的线程
-	// ZZC
-	uk_pr_warn("[unicontainer]UK_TAILQ_EMPTY(&c->run_queue) is %u\n", UK_TAILQ_EMPTY(&c->run_queue));
-	uk_pr_warn("[unicontainer]UK_TAILQ_EMPTY(&c->sleep_queue) is %u\n", UK_TAILQ_EMPTY(&c->sleep_queue));
-	uk_pr_warn("[unicontainer]prev is %llu\n", (long long unsigned)prev);
-	uk_pr_warn("[unicontainer]next is %llu\n", (long long unsigned)next);
-	// uk_pr_warn("[unicontainer]UK_TAILQ_FIRST(&c->sleep_queue) is %llu\n", (long long unsigned)UK_TAILQ_FIRST(&c->sleep_queue));
-	// uk_pr_warn("[unicontainer]UK_TAILQ_NEXT(UK_TAILQ_FIRST(&c->sleep_queue), &c->sleep_queue) is %llu\n", (long long unsigned)UK_TAILQ_NEXT(UK_TAILQ_FIRST(&c->sleep_queue), queue));
-	uk_pr_warn("[unicontainer]&c->idle is %llu\n", (long long unsigned)(&c->idle));
-	// ZZC-end
 	if (next) {
 		UK_ASSERT(next != prev);
 		UK_ASSERT(uk_thread_is_runnable(next));
@@ -152,6 +145,52 @@ static void schedcoop_schedule(struct uk_sched *s)
 		uk_thread_set_queueable(prev);
 		uk_thread_clear_queueable(next);
 	}
+
+	// ZZC
+	uk_pr_warn("[unicontainer]UK_TAILQ_EMPTY(&c->run_queue) is %u\n", UK_TAILQ_EMPTY(&c->run_queue));
+	uk_pr_warn("[unicontainer]UK_TAILQ_EMPTY(&c->sleep_queue) is %u\n", UK_TAILQ_EMPTY(&c->sleep_queue));
+
+	uk_pr_warn("[unicontainer]prev->name is %s\n", prev->name);
+	if(next){
+		uk_pr_warn("[unicontainer]next->name is %s\n", next->name);
+	}
+
+	if(!UK_TAILQ_EMPTY(&c->run_queue)){
+		uk_pr_warn("[unicontainer]run_queue is:");
+		UK_TAILQ_FOREACH(thread, &c->run_queue, queue){
+			uk_pr_warn(" %s", thread->name);
+		}
+		uk_pr_warn("\n");
+	}
+
+	if(!UK_TAILQ_EMPTY(&c->sleep_queue)){
+		uk_pr_warn("[unicontainer]sleep_queue is:");
+		UK_TAILQ_FOREACH(thread, &c->sleep_queue, queue){
+			uk_pr_warn(" %s", thread->name);
+		}
+		uk_pr_warn("\n");
+	}	
+
+	thread_list_size = 0;
+	uk_pr_warn("[unicontainer]thread_list is:");
+	UK_TAILQ_FOREACH(thread, &s->thread_list, thread_list){
+		uk_pr_warn(" %s", thread->name);
+		thread_list_size++;
+	}
+	uk_pr_warn("\n");
+	if (thread_list_size_is_greater_than_2_once == 0 && thread_list_size > 2)
+	{
+		thread_list_size_is_greater_than_2_once = 1;	// thread_list 第一次有多于2个成员, 就把 thread_list_size_is_greater_than_2_once 设置为1
+	}
+
+	if (thread_list_size <= 2 && thread_list_size_is_greater_than_2_once == 1)
+	{
+		// thread_list_size_is_greater_than_2_once 为1，说明 thread_list 的成员数量有过大于2的时候，现在变回2了，说明用户程序执行完了
+		UK_CRASH("[unicontainer]schedcoop_schedule() exit\n");
+	}
+	// 本思路进行了简单尝试，是成功的
+	
+	// ZZC-end
 
 	ukplat_lcpu_restore_irqf(flags);
 
@@ -341,14 +380,14 @@ struct uk_sched *uk_schedcoop_create(struct uk_alloc *a)
 	c->idle.sched = &c->sched;
 
 	uk_sched_init(&c->sched,
-			schedcoop_start,		// start_func
-			schedcoop_schedule,		// yield_func
-			schedcoop_thread_add,
-			schedcoop_thread_remove,
-			schedcoop_thread_blocked,
+			schedcoop_start,		// sched_start
+			schedcoop_schedule,		// yield
+			schedcoop_thread_add,	// thread_add
+			schedcoop_thread_remove,	// thread_remove
+			schedcoop_thread_blocked,	// thread_blocked
 			schedcoop_thread_woken,
 			schedcoop_idle_thread,
-			a);		// 初始化这个调度器
+			a);		// 初始化这个调度器（给调度器的各个函数指针赋值）
 
 	/* Add idle thread to the scheduler's thread list */
 	UK_TAILQ_INSERT_TAIL(&c->sched.thread_list, &c->idle, thread_list);

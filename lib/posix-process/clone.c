@@ -330,7 +330,7 @@ static int _clone(struct clone_args *cl_args, size_t cl_args_len,
 
 	t = uk_thread_current();
 	s = uk_sched_current();
-
+  
 	UK_ASSERT(s);
 	UK_ASSERT(t);
 	/* Parent must have ECTX and a Unikraft TLS */

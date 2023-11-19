@@ -188,6 +188,7 @@ err_out:
 	return NULL;
 }
 
+// 这个函数在 boot.c 的 ukplat_entry() 中被调用
 int uk_sched_start(struct uk_sched *s)
 {
 	struct uk_thread *main_thread;
@@ -332,6 +333,7 @@ void uk_sched_thread_sleep(__nsec nsec)
 	uk_sched_yield();
 }
 
+// 这个函数会被 _clone 函数用到
 int uk_sched_thread_add(struct uk_sched *s, struct uk_thread *t)
 {
 	unsigned long flags;
@@ -343,11 +345,11 @@ int uk_sched_thread_add(struct uk_sched *s, struct uk_thread *t)
 
 	flags = ukplat_lcpu_save_irqf();
 
-	rc = s->thread_add(s, t);
+	rc = s->thread_add(s, t);	// 将目标线程加入目标调度器的线程列表
 	if (rc < 0)
 		goto out;
 
-	t->sched = s;
+	t->sched = s;	// 设置目标线程的调度器
 	UK_TAILQ_INSERT_TAIL(&s->thread_list, t, thread_list);
 out:
 	ukplat_lcpu_restore_irqf(flags);
