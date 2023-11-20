@@ -114,14 +114,6 @@ static void schedcoop_schedule(struct uk_sched *s)
 			UK_TAILQ_INSERT_TAIL(&c->run_queue, prev,
 					     queue);			// 把刚刚执行完的这个线程放到 run_queue 的末尾
 	} 
-	// ZZC
-	// 这里还不确定要怎么写…… 
-	// 系统在一开始 run_queue 和 sleep_queue 也都为空，用这个当作判断条件的话系统就跑不起来了……
-	// else if (UK_TAILQ_EMPTY(&c->run_queue) 
-	// 		&& (UK_TAILQ_FIRST(&c->sleep_queue) == &c->idle)) {		
-	// 	UK_CRASH("[unicontainer]schedcoop_schedule() Exiting\n");	
-	// } 
-	// ZZC-end
 	else if (uk_thread_is_runnable(prev)
 		   && !uk_thread_is_exited(prev)) {
 		next = prev;						// 如果取不出这个“next”，就看看现在这个还能不能接着跑，能的话，“next”还是它
@@ -147,6 +139,7 @@ static void schedcoop_schedule(struct uk_sched *s)
 	}
 
 	// ZZC
+#ifdef CONFIG_LIBUKSCHEDCOOP_DEBUG
 	uk_pr_warn("[unicontainer]UK_TAILQ_EMPTY(&c->run_queue) is %u\n", UK_TAILQ_EMPTY(&c->run_queue));
 	uk_pr_warn("[unicontainer]UK_TAILQ_EMPTY(&c->sleep_queue) is %u\n", UK_TAILQ_EMPTY(&c->sleep_queue));
 
@@ -171,13 +164,21 @@ static void schedcoop_schedule(struct uk_sched *s)
 		uk_pr_warn("\n");
 	}	
 
-	thread_list_size = 0;
 	uk_pr_warn("[unicontainer]thread_list is:");
 	UK_TAILQ_FOREACH(thread, &s->thread_list, thread_list){
 		uk_pr_warn(" %s", thread->name);
-		thread_list_size++;
 	}
 	uk_pr_warn("\n");
+#endif /* CONFIG_LIBUKSCHEDCOOP_DEBUG */
+
+	// 最开始的时候尝试用 run_queue 和 sleep_queue 当作判断依据，但系统在初始化时 run_queue 和 sleep_queue 也都为空，用这个当作判断条件的话系统就跑不起来了……
+	// 反而是挂起的时候这两个队列也不会都为空，idle 会和 init 进程交替执行
+	// 所以尝试用 thread_list 作为判断依据
+	thread_list_size = 0;
+	UK_TAILQ_FOREACH(thread, &s->thread_list, thread_list){
+		thread_list_size++;
+	}	
+
 	if (thread_list_size_is_greater_than_2_once == 0 && thread_list_size > 2)
 	{
 		thread_list_size_is_greater_than_2_once = 1;	// thread_list 第一次有多于2个成员, 就把 thread_list_size_is_greater_than_2_once 设置为1
