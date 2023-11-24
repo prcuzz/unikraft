@@ -40,6 +40,7 @@
 #include <uk/list.h>
 #include <uk/prio.h>
 #include <uk/essentials.h>
+// #include <uk/semaphore.h>	// ZZC
 
 #ifdef __cplusplus
 extern "C" {
@@ -81,6 +82,9 @@ struct uk_thread {
 	__nsec exec_time;		/**< Time the thread was scheduled */
 	const char *name;		/**< Reference to thread name */
 	UK_TAILQ_ENTRY(struct uk_thread) thread_list;
+
+	struct uk_semaphore *vfork_sem;	// ZZC: 用于CLONE_VFORK支持；不用指针的话，这里会报错
+	struct uk_thread *parent;		// ZZC: 用于CLONE_VFORK支持
 };
 
 UK_TAILQ_HEAD(uk_thread_list, struct uk_thread);

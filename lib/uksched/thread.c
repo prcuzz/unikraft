@@ -643,7 +643,7 @@ struct uk_thread *uk_thread_create_container(struct uk_alloc *a,
 	if (!no_ectx && !a_uktls)
 		t_size += ukarch_ectx_size() + ukarch_ectx_align();
 
-	t = uk_malloc(a, t_size);
+	t = uk_malloc(a, t_size);	// 给新的 struct uk_thread 分配空间？
 	if (!t)
 		goto err_out;
 

@@ -6,6 +6,6 @@ menuconfig LIBUKSCHEDCOOP
 
 if LIBUKSCHEDCOOP
 	config LIBUKSCHEDCOOP_DEBUG
-		bool "Enable debug messages"
+		bool "ZZC: Enable debug messages"
 		default n
 endif

@@ -42,6 +42,7 @@
 #include <uk/print.h>
 #include <uk/syscall.h>
 #include <uk/arch/limits.h>
+#include <uk/semaphore.h>
 #include <uk/sched.h>
 
 #include "process.h"
@@ -147,7 +148,7 @@ static int _uk_posix_clonetab_init(const struct clone_args *cl_args,
 			continue;
 
 		/* Masked out flags that we can handle */
-		flags &= ~itr->flags_mask;
+		flags &= ~itr->flags_mask;	// 去掉所有支持的 flag，然后在下面检查是否有不支持的 flag 留着？
 	}
 	/* Mask out optional flags:
 	 * We should not fail if we can't handle those
@@ -328,8 +329,8 @@ static int _clone(struct clone_args *cl_args, size_t cl_args_len,
 	__u64 flags;
 	int ret;
 
-	t = uk_thread_current();
-	s = uk_sched_current();
+	t = uk_thread_current();	// 获取当前线程
+	s = uk_sched_current();		// 获取当前调度器
   
 	UK_ASSERT(s);
 	UK_ASSERT(t);
@@ -447,7 +448,7 @@ static int _clone(struct clone_args *cl_args, size_t cl_args_len,
 	 * NOTE: If SETTLS is not set, we do not activate any TLS although
 	 *       an Unikraft TLS was allocated.
 	 */
-	child->tlsp = (flags & CLONE_SETTLS) ? cl_args->tls : 0x0;
+	child->tlsp = (flags & CLONE_SETTLS) ? cl_args->tls : 0x0;	// 设置 TLS pointer？
 	uk_pr_debug("Child is going to wake up with TLS pointer set to: %p (%s TLS)\n",
 		    (void *) child->tlsp,
 		    (child->tlsp != child->uktlsp) ? "custom" : "Unikraft");
@@ -471,13 +472,24 @@ static int _clone(struct clone_args *cl_args, size_t cl_args_len,
 			(__uptr) cl_args->stack,
 			false,
 			return_addr);
-	uk_thread_set_runnable(child);
+	uk_thread_set_runnable(child);	// 把这个新的 child 设置为可运行
 
 	/* We will return the child's thread ID in the parent */
 	ret = ukthread2tid(child);
 
 	/* Assign the child to the scheduler */
-	uk_sched_thread_add(s, child);
+	uk_sched_thread_add(s, child);	// 把这个新的 child 加入 s->thread_list
+
+	// ZZC: VFORK 支持
+	child->parent = t;
+	if (flags & CLONE_VFORK){
+		t->vfork_sem = (struct uk_semaphore*)uk_malloc(s->a, sizeof(struct uk_semaphore));	// 给 vfork_sem 分配空间
+		UK_ASSERT(t->vfork_sem);
+		uk_semaphore_init(t->vfork_sem, 0);		// 初始化 vfork 信号量
+		uk_semaphore_down(t->vfork_sem);		// vfork 信号量减一
+		;
+	}
+	// ZZC-end
 
 	return ret;
 
@@ -533,6 +545,7 @@ int clone(int (*fn)(void *) __unused, void *sp __unused,
  * the address space is shared. Unikraft does currently not support
  * multiple application address spaces.
  */
+// 乍一眼看过去还以为是 check kvm，寻思这检查些什么啊…… 再一看，原来是 check vm（CLONE_VM）
 static int uk_posix_clone_checkvm(const struct clone_args *cl_args,
 				  size_t cl_args_len __unused,
 				  struct uk_thread *child __unused,
