@@ -558,8 +558,12 @@ UK_SYSCALL_R_DEFINE(pid_t, getppid)
   */
 UK_LLSYSCALL_R_DEFINE(int, exit, int, status)
 {
+	// ZZC: CLONE_VFORK, 唤醒父线程
+	uk_pr_debug("[unicontainer]exit(): thread name: %s\n", pthread_self->thread->name);
 	UK_ASSERT(pthread_self->thread->parent->vfork_sem);
-	uk_semaphore_up(pthread_self->thread->parent->vfork_sem);	// ZZC: CLONE_VFORK, 唤醒父线程 
+	uk_semaphore_up(pthread_self->thread->parent->vfork_sem);
+	// ZZC-end
+
 	uk_sched_thread_exit(); /* won't return */
 	UK_CRASH("sys_exit() unexpectedly returned\n");
 	return -EFAULT;

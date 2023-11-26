@@ -128,6 +128,7 @@ ENTRY(_ukplat_syscall)
 	 * [1] Pierre et al., 2019, A binary-compatible Unikernel,
 	 *     Proceedings of the 15th ACM SIGPLAN/SIGOPS International
 	 *     Conference on Virtual Execution Environments (VEE 2019))
+	 * ZZC: “We can't use sysret because it changes protection mode”，那就是说这里是不改变特权级的咯？
 	 */
 	jmp *%rcx
 	.cfi_endproc

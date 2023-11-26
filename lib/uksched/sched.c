@@ -338,6 +338,7 @@ int uk_sched_thread_add(struct uk_sched *s, struct uk_thread *t)
 {
 	unsigned long flags;
 	int rc;
+	struct uk_thread *thread;
 
 	UK_ASSERT(s);
 	UK_ASSERT(t);
@@ -351,6 +352,15 @@ int uk_sched_thread_add(struct uk_sched *s, struct uk_thread *t)
 
 	t->sched = s;	// 设置目标线程的调度器
 	UK_TAILQ_INSERT_TAIL(&s->thread_list, t, thread_list);
+
+	// ZZC
+	uk_pr_warn("[unicontainer]uk_sched_thread_add(): the inserted thread name is %s\n", t->name);
+	uk_pr_warn("[unicontainer]uk_sched_thread_add(): thread_list contains");
+	UK_TAILQ_FOREACH(thread, &s->thread_list, thread_list){
+		uk_pr_warn(" %s", thread->name);
+	}
+	uk_pr_warn("\n");
+	// ZZC-end
 out:
 	ukplat_lcpu_restore_irqf(flags);
 	return rc;

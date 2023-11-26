@@ -47,6 +47,7 @@ extern "C" {
 #endif
 
 #if CONFIG_LIBUKDEBUG_ENABLE_ASSERT
+/* ZZC：计算表达式x，如果不为真，就crash */
 #define UK_ASSERT(x)							\
 	do {								\
 		if (unlikely(!(x))) {					\

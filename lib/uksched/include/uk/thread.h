@@ -83,7 +83,7 @@ struct uk_thread {
 	const char *name;		/**< Reference to thread name */
 	UK_TAILQ_ENTRY(struct uk_thread) thread_list;
 
-	struct uk_semaphore *vfork_sem;	// ZZC: 用于CLONE_VFORK支持；不用指针的话，这里会报错
+	struct uk_semaphore *vfork_sem;	// ZZC: 用于CLONE_VFORK支持；不用指针、直接 include semaphore 的头文件的话，这里会报错
 	struct uk_thread *parent;		// ZZC: 用于CLONE_VFORK支持
 };
 

@@ -140,8 +140,9 @@ static void schedcoop_schedule(struct uk_sched *s)
 
 	// ZZC
 #ifdef CONFIG_LIBUKSCHEDCOOP_DEBUG
-	uk_pr_warn("[unicontainer]UK_TAILQ_EMPTY(&c->run_queue) is %u\n", UK_TAILQ_EMPTY(&c->run_queue));
-	uk_pr_warn("[unicontainer]UK_TAILQ_EMPTY(&c->sleep_queue) is %u\n", UK_TAILQ_EMPTY(&c->sleep_queue));
+	uk_pr_warn("[unicontainer]——————Single debug splitting line——————\n");	
+	// uk_pr_warn("[unicontainer]UK_TAILQ_EMPTY(&c->run_queue) is %u\n", UK_TAILQ_EMPTY(&c->run_queue));
+	// uk_pr_warn("[unicontainer]UK_TAILQ_EMPTY(&c->sleep_queue) is %u\n", UK_TAILQ_EMPTY(&c->sleep_queue));
 
 	uk_pr_warn("[unicontainer]prev->name is %s\n", prev->name);
 	if(next){
@@ -263,9 +264,9 @@ static __noreturn void idle_thread_fn(void *argp)
 	UK_ASSERT(c);
 
 	// ZZC
-	uk_pr_warn("[unicontainer]idle_thread_fn()\n");
-	uk_pr_warn("[unicontainer]UK_TAILQ_EMPTY(&c->run_queue) is %u\n", UK_TAILQ_EMPTY(&c->run_queue));
-	uk_pr_warn("[unicontainer]UK_TAILQ_EMPTY(&c->sleep_queue) is %u\n", UK_TAILQ_EMPTY(&c->sleep_queue));
+	// uk_pr_warn("[unicontainer]idle_thread_fn()\n");
+	// uk_pr_warn("[unicontainer]UK_TAILQ_EMPTY(&c->run_queue) is %u\n", UK_TAILQ_EMPTY(&c->run_queue));
+	// uk_pr_warn("[unicontainer]UK_TAILQ_EMPTY(&c->sleep_queue) is %u\n", UK_TAILQ_EMPTY(&c->sleep_queue));
 	// ZZC-end
 
 	for (;;) {

@@ -120,7 +120,9 @@ static int _clonetab_term_call(void *argp)
 	(args->term)(args->cl_flags, args->child);
 	return 0;
 }
-/** Iterates over registered thread initialization functions */
+/** Iterates over registered thread initialization functions
+ * 	遍历已注册的线程初始化函数
+ */
 static int _uk_posix_clonetab_init(const struct clone_args *cl_args,
 				   size_t cl_args_len,
 				   __u64 cl_flags_optional,
@@ -143,12 +145,12 @@ static int _uk_posix_clonetab_init(const struct clone_args *cl_args,
 	 * we would call the init functions already.
 	 */
 	flags = cl_args->flags;
-	uk_posix_clonetab_foreach(itr) {
+	uk_posix_clonetab_foreach(itr) {	// 这个 itr 可能和 for 循环里的 i 类似？这个 clonetab 里都有啥呢？
 		if (unlikely(!itr->init))
 			continue;
 
 		/* Masked out flags that we can handle */
-		flags &= ~itr->flags_mask;	// 去掉所有支持的 flag，然后在下面检查是否有不支持的 flag 留着？
+		flags &= ~itr->flags_mask;	// 去掉所有支持的 flag，然后在下面检查是否有不支持的 flag 留着？重点似乎是这个itr
 	}
 	/* Mask out optional flags:
 	 * We should not fail if we can't handle those
@@ -480,15 +482,25 @@ static int _clone(struct clone_args *cl_args, size_t cl_args_len,
 	/* Assign the child to the scheduler */
 	uk_sched_thread_add(s, child);	// 把这个新的 child 加入 s->thread_list
 
-	// ZZC: VFORK 支持
+	// ZZC: CLONE_VFORK 支持
 	child->parent = t;
+	uk_pr_debug("[unicontainer]_clone() debug0\n");
 	if (flags & CLONE_VFORK){
-		t->vfork_sem = (struct uk_semaphore*)uk_malloc(s->a, sizeof(struct uk_semaphore));	// 给 vfork_sem 分配空间
-		UK_ASSERT(t->vfork_sem);
-		uk_semaphore_init(t->vfork_sem, 0);		// 初始化 vfork 信号量
-		uk_semaphore_down(t->vfork_sem);		// vfork 信号量减一
-		;
+		if(!t->vfork_sem){
+			t->vfork_sem = (struct uk_semaphore*)uk_malloc(s->a, sizeof(struct uk_semaphore));	// 如果没初始化过，就给父进程的 vfork_sem 分配空间，初始化为1
+			uk_semaphore_init(t->vfork_sem, 1);
+		}
+		UK_ASSERT(t->vfork_sem);	// 断言失败
+
+		child->vfork_sem = (struct uk_semaphore*)uk_malloc(s->a, sizeof(struct uk_semaphore));
+		uk_semaphore_init(child->vfork_sem, 1);
+		UK_ASSERT(child->vfork_sem);
+		
+		uk_pr_debug("[unicontainer]_clone() debug2\n");	// 这里没执行
+
+		uk_semaphore_down(t->vfork_sem);		// 父进程的 vfork 信号量减一
 	}
+	uk_pr_debug("[unicontainer]_clone() debug3\n");
 	// ZZC-end
 
 	return ret;
@@ -571,3 +583,15 @@ static int uk_posix_clone_detached(const struct clone_args *cl_args __unused,
 	return 0;
 }
 UK_POSIX_CLONE_HANDLER(CLONE_DETACHED, false, uk_posix_clone_detached, 0x0);
+
+// ZZC: CLONE_VFORK
+static int uk_posix_clone_vfork(const struct clone_args *cl_args __unused,
+				  size_t cl_args_len __unused,
+				  struct uk_thread *child __unused,
+				  struct uk_thread *parent __unused)
+{
+	UK_WARN_STUBBED();
+	return 0;
+}
+UK_POSIX_CLONE_HANDLER(CLONE_VFORK, true, uk_posix_clone_vfork, 0x0);	// 这个宏注册的函数似乎会在clone的过程中全部跑一遍
+// ZZC-end
