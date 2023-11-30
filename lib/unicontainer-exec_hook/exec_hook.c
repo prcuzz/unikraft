@@ -3,16 +3,18 @@
 #include <uk/arch/lcpu.h>
 #include "exec_hook.h"
 
-// execve definition:
-//      int execve(const char *filename, char *const argv[], char *const envp[]);
+/* 
+execve definition:
+     int execve(const char *filename, char *const argv[], char *const envp[]);
 
-// original rip for user programs: rcx
-// system call number: orig_rax
-// 64-bit register parameter passing order: rdi, rsi, rdx, r10, r8, r9
-// return value: rax
+original rip for user programs: rcx
+system call number: orig_rax
+64-bit register parameter passing order: rdi, rsi, rdx, r10, r8, r9
+return value: rax
 
-// VMCALL nr: rax
-// VMCALL parameter: rbx, rcx, rdx, rsi
+VMCALL nr: rax
+VMCALL parameter: rbx, rcx, rdx, rsi 
+*/
 
 #define NULL                        ((void *) 0)
 #define KVM_HC_CLOCK_PAIRING		9

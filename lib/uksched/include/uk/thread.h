@@ -604,7 +604,7 @@ void uk_thread_block_timeout(struct uk_thread *thread, __nsec nsec);
 void uk_thread_block(struct uk_thread *thread);
 void uk_thread_wake(struct uk_thread *thread);
 
-/**
+/* *
  * Macro to access a Unikraft thread-local (UKTLS) variable of a
  * (foreign) thread.
  * This macro computes the offset of the TLS variable address to the
@@ -614,6 +614,10 @@ void uk_thread_wake(struct uk_thread *thread);
  * Because we get the absolute address of a variable with the `&`
  * operand, we need to subtract the current TLS pointer to retrieve
  * the variable offset.
+ * 访问（外来）线程的 Unikraft 线程本地 (UKTLS) 变量的宏。
+ * 此宏计算 TLS 变量地址到架构 TLS 指针的偏移量。
+ * 由于每个 UKTLS 都具有相同的结构，因此从 tlsp 到变量的偏移量应该是相同的，无论我们查看的是哪个 TLS。
+ * 因为我们使用 `&` 操作符获取变量的绝对地址，所以我们需要减去当前 TLS 指针来获取变量偏移量。
  */
 #define uk_thread_uktls_var(thread, variable)				\
 	(*({								\

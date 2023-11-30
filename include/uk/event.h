@@ -294,6 +294,7 @@ static inline int uk_raise_event_ptr(struct uk_event *e, void *data)
 /**
  * Helper macro to raise an event by name. Invokes the handler chain until the
  * first handler successfully handled the event.
+ * 按名称引发事件的辅助宏。调用处理程序链，直到第一个处理程序成功处理该事件。
  *
  * @param event
  *   Name of the event to raise.

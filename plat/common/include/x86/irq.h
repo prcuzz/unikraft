@@ -39,6 +39,7 @@
 #define __REG "r"
 #endif
 
+/*ZZC：cli，Clear Interrupt，关中断的意思*/
 #define __cli() \
 ({ \
 	asm volatile("cli" : : : "memory"); \

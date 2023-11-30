@@ -321,6 +321,8 @@ static void _clone_child_gc(struct uk_thread *t)
  *       In case no TLS is handed over (CLONE_SETTLS is not set), _clone will
  *       still allocate an Unikraft TLS but sets the TLS architecture pointer
  *       to zero.
+ * 
+ * return_addr 保存的是用户程序中 clone syscall 之后的那个指令地址
  */
 static int _clone(struct clone_args *cl_args, size_t cl_args_len,
 		  __uptr return_addr)
@@ -480,7 +482,7 @@ static int _clone(struct clone_args *cl_args, size_t cl_args_len,
 	ret = ukthread2tid(child);
 
 	/* Assign the child to the scheduler */
-	uk_sched_thread_add(s, child);	// 把这个新的 child 加入 s->thread_list
+	uk_sched_thread_add(s, child);	// 把这个新的 child 加入 s->thread_list（s 是调度器）
 
 	// ZZC: CLONE_VFORK 支持
 	child->parent = t;
@@ -488,17 +490,17 @@ static int _clone(struct clone_args *cl_args, size_t cl_args_len,
 	if (flags & CLONE_VFORK){
 		if(!t->vfork_sem){
 			t->vfork_sem = (struct uk_semaphore*)uk_malloc(s->a, sizeof(struct uk_semaphore));	// 如果没初始化过，就给父进程的 vfork_sem 分配空间，初始化为1
-			uk_semaphore_init(t->vfork_sem, 1);
+			uk_semaphore_init(t->vfork_sem, 0);
 		}
-		UK_ASSERT(t->vfork_sem);	// 断言失败
+		UK_ASSERT(t->vfork_sem);
 
-		child->vfork_sem = (struct uk_semaphore*)uk_malloc(s->a, sizeof(struct uk_semaphore));
-		uk_semaphore_init(child->vfork_sem, 1);
+		child->vfork_sem = (struct uk_semaphore*)uk_malloc(s->a, sizeof(struct uk_semaphore));	// 初始化子进程的 vfork_sem
+		uk_semaphore_init(child->vfork_sem, 0);
 		UK_ASSERT(child->vfork_sem);
 		
-		uk_pr_debug("[unicontainer]_clone() debug2\n");	// 这里没执行
+		uk_pr_debug("[unicontainer]_clone() debug2\n");
 
-		uk_semaphore_down(t->vfork_sem);		// 父进程的 vfork 信号量减一
+		uk_semaphore_down(t->vfork_sem);		// 父进程的 vfork 信号量减一；这里是不是应该重新做一次调度了？
 	}
 	uk_pr_debug("[unicontainer]_clone() debug3\n");
 	// ZZC-end

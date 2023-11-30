@@ -46,7 +46,7 @@ extern "C" {
  * uses wait queues for threads
  */
 struct uk_semaphore {
-	struct uk_spinlock sl;	// 自旋锁
+	struct uk_spinlock sl;	// 自旋锁，这个结构体里面只有一个成员（volatile int lock）
 	long count;
 	struct uk_waitq wait;
 };
@@ -60,8 +60,8 @@ static inline void uk_semaphore_down(struct uk_semaphore *s)
 	UK_ASSERT(s);
 
 	for (;;) {
-		uk_waitq_wait_event(&s->wait, s->count > 0);	// vfork_sem->count 在这里应该是1
-		uk_spin_lock_irqsave(&(s->sl), irqf);
+		uk_waitq_wait_event(&s->wait, s->count > 0);	// vfork_sem->count 初始化时应该是几？
+		uk_spin_lock_irqsave(&(s->sl), irqf);			// 保存当前能否中断的状态，上自旋锁
 		if (s->count > 0)
 			break;
 		uk_spin_unlock_irqrestore(&(s->sl), irqf);

@@ -333,7 +333,9 @@ void uk_sched_thread_sleep(__nsec nsec)
 	uk_sched_yield();
 }
 
-// 这个函数会被 _clone 函数用到
+/** 这个函数会被 _clone 函数用到
+ * 将目标 thread 加入调度器的待运行列表和 thread_list 成员中
+*/
 int uk_sched_thread_add(struct uk_sched *s, struct uk_thread *t)
 {
 	unsigned long flags;
@@ -344,9 +346,9 @@ int uk_sched_thread_add(struct uk_sched *s, struct uk_thread *t)
 	UK_ASSERT(t);
 	UK_ASSERT(!t->sched);
 
-	flags = ukplat_lcpu_save_irqf();
+	flags = ukplat_lcpu_save_irqf();	// 关中断
 
-	rc = s->thread_add(s, t);	// 将目标线程加入目标调度器的线程列表
+	rc = s->thread_add(s, t);	// 将目标线程加入目标调度器的线程列表；这个函数在 schedcoop 中被注册为 schedcoop_thread_add
 	if (rc < 0)
 		goto out;
 
@@ -362,7 +364,7 @@ int uk_sched_thread_add(struct uk_sched *s, struct uk_thread *t)
 	uk_pr_warn("\n");
 	// ZZC-end
 out:
-	ukplat_lcpu_restore_irqf(flags);
+	ukplat_lcpu_restore_irqf(flags);	// 开中断
 	return rc;
 }
 

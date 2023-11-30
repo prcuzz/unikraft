@@ -87,6 +87,10 @@ void uk_sched_thread_switch(struct uk_thread *next)
 {
 	struct uk_thread *prev;
 
+#ifdef CONFIG_LIBUKSCHED_DEBUG
+	uk_pr_debug("[unicontainer]uk_sched_thread_switch(): executing\n");
+#endif /* CONFIG_LIBUKSCHED_DEBUG */
+
 	prev = ukplat_per_lcpu_current(__uk_sched_thread_current);
 
 	UK_ASSERT(prev);
@@ -104,6 +108,12 @@ void uk_sched_thread_switch(struct uk_thread *next)
 	ukplat_tlsp_set(next->tlsp);
 	if (next->ectx)
 		ukarch_ectx_load(next->ectx);
+
+#ifdef CONFIG_LIBUKSCHED_DEBUG
+	// uk_pr_debug("[unicontainer]uk_sched_thread_switch(): debug0\n");
+	uk_pr_debug("[unicontainer]uk_sched_thread_switch(): prev->ctx.sp is %llu, prev->ctx.ip is %llu\n", prev->ctx.sp, prev->ctx.ip);
+	uk_pr_debug("[unicontainer]uk_sched_thread_switch(): next->ctx.sp is %llu, next->ctx.ip is %llu\n", next->ctx.sp, next->ctx.ip);
+#endif /* CONFIG_LIBUKSCHED_DEBUG */
 
 	ukarch_ctx_switch(&prev->ctx, &next->ctx);
 }

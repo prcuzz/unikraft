@@ -84,14 +84,21 @@ ENTRY(ukarch_ctx_switch)
 	pushq %r12
 	pushq %r13
 	pushq %r14
-	pushq %r15
-	movq %rsp, UKARCH_CTX_OFFSETOF_SP(%rdi)       /* save ESP */
-	movq UKARCH_CTX_OFFSETOF_SP(%rsi), %rsp       /* restore ESP */
-	lea .Lresume(%rip), %rbx
-	movq %rbx, UKARCH_CTX_OFFSETOF_IP(%rdi)       /* save EIP */
-	pushq UKARCH_CTX_OFFSETOF_IP(%rsi)            /* restore EIP
-						       * (to stack and return)
-						       */
+	pushq %r15									/* 这里把这些寄存器都存进现在这个进程的栈中，等待下次执行时 pop 恢复它们 */
+	movq %rsp, UKARCH_CTX_OFFSETOF_SP(%rdi)     /* save ESP，
+													%rdi 是 &prev->ctx，UKARCH_CTX_OFFSETOF_SP(%rdi) 是 &prev->ctx.sp，
+													其中 UKARCH_CTX_OFFSETOF_SP 是一个偏移量的宏，
+													这里相当于把现在的 esp 给保存到当前进程的 ctx 结构中 */
+	movq UKARCH_CTX_OFFSETOF_SP(%rsi), %rsp    	/* restore ESP, 
+													UKARCH_CTX_OFFSETOF_SP(%rsi) 是 &next->ctx.sp，
+													这里相当于把下一个要执行的进程的 esp 值从 ctx 结构中复制到 esp 寄存器中 */
+	lea .Lresume(%rip), %rbx					/* 把 .Lresume 的地址传给 rbx，在下一步中保存到 &prev->ctx.ip 中，
+													重新调度回这个进程时就会从 .Lresume 处执行下去，依次恢复被保存起来的寄存器值;
+													运行了然后被调度过的进程的 rip 应该都是 .Lresume 的地址？ */
+	movq %rbx, UKARCH_CTX_OFFSETOF_IP(%rdi)    	/* save EIP */
+	pushq UKARCH_CTX_OFFSETOF_IP(%rsi)         	/* restore EIP
+						       						* (to stack and return)
+						       						*/
 	ret
 
 .Lresume:

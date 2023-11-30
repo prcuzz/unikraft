@@ -140,36 +140,36 @@ static void schedcoop_schedule(struct uk_sched *s)
 
 	// ZZC
 #ifdef CONFIG_LIBUKSCHEDCOOP_DEBUG
-	uk_pr_warn("[unicontainer]——————Single debug splitting line——————\n");	
+	uk_pr_debug("[unicontainer]——————schedcoop_schedule() single debug splitting line——————\n");	
 	// uk_pr_warn("[unicontainer]UK_TAILQ_EMPTY(&c->run_queue) is %u\n", UK_TAILQ_EMPTY(&c->run_queue));
 	// uk_pr_warn("[unicontainer]UK_TAILQ_EMPTY(&c->sleep_queue) is %u\n", UK_TAILQ_EMPTY(&c->sleep_queue));
 
-	uk_pr_warn("[unicontainer]prev->name is %s\n", prev->name);
+	uk_pr_debug("[unicontainer]prev->name is %s\n", prev->name);
 	if(next){
-		uk_pr_warn("[unicontainer]next->name is %s\n", next->name);
+		uk_pr_debug("[unicontainer]next->name is %s\n", next->name);
 	}
 
 	if(!UK_TAILQ_EMPTY(&c->run_queue)){
-		uk_pr_warn("[unicontainer]run_queue is:");
+		uk_pr_debug("[unicontainer]run_queue is:");
 		UK_TAILQ_FOREACH(thread, &c->run_queue, queue){
-			uk_pr_warn(" %s", thread->name);
+			uk_pr_debug(" %s", thread->name);
 		}
-		uk_pr_warn("\n");
+		uk_pr_debug("\n");
 	}
 
 	if(!UK_TAILQ_EMPTY(&c->sleep_queue)){
-		uk_pr_warn("[unicontainer]sleep_queue is:");
+		uk_pr_debug("[unicontainer]sleep_queue is:");
 		UK_TAILQ_FOREACH(thread, &c->sleep_queue, queue){
-			uk_pr_warn(" %s", thread->name);
+			uk_pr_debug(" %s", thread->name);
 		}
-		uk_pr_warn("\n");
+		uk_pr_debug("\n");
 	}	
 
-	uk_pr_warn("[unicontainer]thread_list is:");
+	uk_pr_debug("[unicontainer]thread_list is:");
 	UK_TAILQ_FOREACH(thread, &s->thread_list, thread_list){
-		uk_pr_warn(" %s", thread->name);
+		uk_pr_debug(" %s", thread->name);
 	}
-	uk_pr_warn("\n");
+	uk_pr_debug("\n");
 #endif /* CONFIG_LIBUKSCHEDCOOP_DEBUG */
 
 	// 最开始的时候尝试用 run_queue 和 sleep_queue 当作判断依据，但系统在初始化时 run_queue 和 sleep_queue 也都为空，用这个当作判断条件的话系统就跑不起来了……

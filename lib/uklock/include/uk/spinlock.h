@@ -96,6 +96,10 @@ extern "C" {
 			ukplat_lcpu_enable_irq();			\
 	} while (0)
 
+/** ZZC: 
+ * ukplat_lcpu_save_irqf() 保存当前能否中断的状态
+ * uk_spin_lock() 上自旋锁
+*/
 #define uk_spin_lock_irqsave(lock, flags)				\
 	do {								\
 		flags = ukplat_lcpu_save_irqf();			\

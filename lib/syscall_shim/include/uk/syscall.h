@@ -75,6 +75,7 @@ extern __uk_tls __uptr _uk_syscall_return_addr;
 
 /**
  * Returns the return address of the currently called system call.
+ * 返回当前调用的系统调用的返回地址。
  */
 #define uk_syscall_return_addr()					\
 	((__uptr)((_uk_syscall_return_addr != 0x0)			\

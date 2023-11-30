@@ -70,6 +70,7 @@ static void __noreturn _ukplat_entry2(void)
 	ukplat_lcpu_halt();
 }
 
+/** 这里是整个 unikraft 的入口，用 gdb 调试时就是从这里开始的 */
 void _ukplat_entry(struct lcpu *lcpu, struct ukplat_bootinfo *bi)
 {
 	int rc;

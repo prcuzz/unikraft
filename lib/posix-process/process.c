@@ -493,7 +493,7 @@ pid_t ukthread2tid(struct uk_thread *thread)
 {
 	struct posix_thread *pthread;
 
-	pthread = uk_thread_uktls_var(thread, pthread_self);
+	pthread = uk_thread_uktls_var(thread, pthread_self);	// 由 uk_thread 计算出对应的 posix_thread？
 	if (!pthread)
 		return -ENOTSUP;
 

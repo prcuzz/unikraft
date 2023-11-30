@@ -5,8 +5,8 @@
 
 void uk_semaphore_init(struct uk_semaphore *s, long count)
 {
-	uk_spin_init(&(s->sl));
-	s->count = count;
+	uk_spin_init(&(s->sl));	// 初始化自旋锁，lock 设置为0
+	s->count = count;		// 设置count
 	uk_waitq_init(&s->wait);
 
 #ifdef UK_SEMAPHORE_DEBUG
