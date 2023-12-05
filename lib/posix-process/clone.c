@@ -143,9 +143,14 @@ static int _uk_posix_clonetab_init(const struct clone_args *cl_args,
 	/* Test if we can handle all requested clone flags.
 	 * In case we fail, we do not need to re-wind the operations like as
 	 * we would call the init functions already.
+	 * 
+	 * 这个 clone table 里存放的是用 UK_POSIX_CLONE_HANDLER 宏注册的对各个 flag 的处理函数，
+	 * 调试中的单个项如下所示：
+	 * (gdb) print *_uk_posix_clonetab_start
+	 * $4 = {flags_mask = 65536, presence_only = false, init = 0x126790 <pprocess_clone_thread>, term = 0x0}
 	 */
 	flags = cl_args->flags;
-	uk_posix_clonetab_foreach(itr) {	// 这个 itr 可能和 for 循环里的 i 类似？这个 clonetab 里都有啥呢？
+	uk_posix_clonetab_foreach(itr) {	// 这个 itr 可能和 for 循环里的 i 类似
 		if (unlikely(!itr->init))
 			continue;
 
@@ -185,7 +190,7 @@ static int _uk_posix_clonetab_init(const struct clone_args *cl_args,
 		 */
 		init_args.init = *itr->init;
 		ret = ukplat_tlsp_exec(child->uktlsp, _clonetab_init_call,
-				       &init_args);
+				       &init_args);		// 这里调用对各个 flag 的初始化处理函数
 		if (ret < 0) {
 			uk_pr_debug("posix_clone %p (%s) init: %p() returned %d\n",
 				    child,
