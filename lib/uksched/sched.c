@@ -356,6 +356,7 @@ int uk_sched_thread_add(struct uk_sched *s, struct uk_thread *t)
 	UK_TAILQ_INSERT_TAIL(&s->thread_list, t, thread_list);
 
 	// ZZC
+	UK_ASSERT(t->name);
 	uk_pr_warn("[unicontainer]uk_sched_thread_add(): the inserted thread name is %s\n", t->name);
 	uk_pr_warn("[unicontainer]uk_sched_thread_add(): thread_list contains");
 	UK_TAILQ_FOREACH(thread, &s->thread_list, thread_list){

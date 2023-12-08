@@ -559,6 +559,7 @@ UK_SYSCALL_R_DEFINE(pid_t, getppid)
 UK_LLSYSCALL_R_DEFINE(int, exit, int, status)
 {
 	// ZZC: CLONE_VFORK, 唤醒父线程
+	UK_ASSERT(pthread_self->thread->name);
 	uk_pr_debug("[unicontainer]exit(): thread name: %s\n", pthread_self->thread->name);
 	UK_ASSERT(pthread_self->thread->parent->vfork_sem);
 	// 这里是不是应该再做个父进程是否因为CLONE_VFORK阻塞了的判断？

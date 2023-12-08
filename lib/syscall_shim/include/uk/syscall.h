@@ -127,6 +127,7 @@ extern __uk_tls __uptr _uk_syscall_return_addr;
 /**
  * Library-internal thread-local variable containing the current userland
  * TLS pointer.
+ * 包含当前用户态 TLS 指针的库内部线程本地变量。
  * NOTE: Use the `uk_syscall_ultlsp()` macro to retrieve the userland TLS
  *       pointer.
  * NOTE: Userland TLS pointers are only supported on binary system calls.
@@ -137,6 +138,9 @@ extern __uk_tls __uptr _uk_syscall_ultlsp;
  * Returns the userland TLS pointer if it is not equal to the Unikraft tlsp of
  * the current thread and if it was set. Please note that we must be called
  * from a binary system call request.
+ * 如果用户本地 TLS 指针不等于当前线程的 Unikraft tlsp，且该指针已被设置，
+ * 则返回用户本地 TLS 指针。
+ * 请注意，我们必须从二进制系统调用请求中调用。
  */
 static inline __uptr uk_syscall_ultlsp(void)
 {
@@ -144,7 +148,7 @@ static inline __uptr uk_syscall_ultlsp(void)
 	struct uk_thread *self = uk_thread_current();
 
 	UK_ASSERT(self);
-	if (ultlsp && (ultlsp != self->uktlsp))
+	if (ultlsp && (ultlsp != self->uktlsp))	// 这里为什么要分 userland TLS 和 uk TLS？
 		return ultlsp;
 	return 0x0;
 }

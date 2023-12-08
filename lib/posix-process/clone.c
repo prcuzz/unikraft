@@ -457,7 +457,15 @@ static int _clone(struct clone_args *cl_args, size_t cl_args_len,
 	 * NOTE: If SETTLS is not set, we do not activate any TLS although
 	 *       an Unikraft TLS was allocated.
 	 */
-	child->tlsp = (flags & CLONE_SETTLS) ? cl_args->tls : 0x0;	// 设置 TLS pointer？
+	child->tlsp = (flags & CLONE_SETTLS) ? cl_args->tls : 0x0;	// 设置 TLS pointer？这里为什么给 child 分配好了 tlsp 然后又赋值成 cl_args->tls？
+
+#ifdef CONFIG_LIBEXECHOOK
+	/** 不管三七二十一，把 child->tlsp 就设置成 child->uktlsp;
+	 * 那还需要强制加 CLONE_SETTLS 吗？ */
+	UK_ASSERT(child->uktlsp);
+	child->tlsp = child->uktlsp;
+#endif /* CONFIG_LIBEXECHOOK */
+
 	uk_pr_debug("Child is going to wake up with TLS pointer set to: %p (%s TLS)\n",
 		    (void *) child->tlsp,
 		    (child->tlsp != child->uktlsp) ? "custom" : "Unikraft");
@@ -534,6 +542,18 @@ UK_LLSYSCALL_R_DEFINE(int, clone,
 		      int *, child_tid)
 #endif /* !CONFIG_ARCH_X86_64 */
 {
+#ifdef CONFIG_LIBEXECHOOK
+	/** 
+	 * 如果 clone 的 flag 只有 CLONE_VM | CLONE_VFORK，那一般接下来就要做 execve 了，这种情况就是我们的 exec_hook 需要处理的；
+	 * 但 unikraft 又要求 clone 时必须有 CLONE_FS | CLONE_FILES，所以额外加上；
+	 * 如果不加 CLONE_SETTLS 跑很多标准库函数时会报错。
+	 * 0x11 是 SIGCHLD。
+	 * */
+	if((flags == (CLONE_VM | CLONE_VFORK)) || (flags == (CLONE_VM | CLONE_VFORK | 0x11))){
+		flags |= CLONE_FS | CLONE_FILES | CLONE_SETTLS;
+	}
+#endif /* !CONFIG_LIBEXECHOOK */
+
 	/* Translate */
 	struct clone_args cl_args = {
 		.flags       = (__u64) (flags & ~0xff),

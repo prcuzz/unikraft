@@ -91,11 +91,17 @@ int exec_hook(struct __regs *r){
     ret = kvm_hypercall4(VMCALL_UNICONTAINER_EXEC, r->rdi, r->rsi, r->rdx, (unsigned long)ret_context);
     uk_pr_debug("[unicontainer]return value from kvm vmcall: %ld\n", ret);
     uk_pr_debug("[unicontainer]return context from kvm vmcall: %s\n", ret_context);
-    write(1, ret_context, strlen(ret_context));
-    write(1, "\n", strlen("\n"));
+    strcpy(ret_context, "[unicontainer]exec_hook() debug, if you see this message in the official version, change the code of exec_hook().\n");
+    // write(1, ret_context, strlen(ret_context));
+    uk_syscall_r_write(1, ret_context, strlen(ret_context));
+    // write(1, "\n", strlen("\n"));
+    uk_syscall_r_write(1, "\n", strlen("\n"));
 
     free(ret_context);
 
-    UK_CRASH("[unicontainer]exec_hook() Exiting\n");
+    uk_syscall_r_exit(0);   // 退出当前线程
+
+    UK_CRASH("[unicontainer]exec_hook() Exiting\n");    // 应该不会执行到这里才对
+
     return 0;
 }

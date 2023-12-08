@@ -104,6 +104,8 @@ void uk_sched_thread_switch(struct uk_thread *next)
 	/* Load next TLS and extended registers before context switch.
 	 * This avoids requiring special initialization code for newly
 	 * created threads to do the loading.
+	 * 在上下文切换前加载下一个 TLS 和扩展寄存器。 
+	 * 这样可以避免新创建的线程需要专门的初始化代码来完成加载。
 	 */
 	ukplat_tlsp_set(next->tlsp);
 	if (next->ectx)
@@ -111,7 +113,9 @@ void uk_sched_thread_switch(struct uk_thread *next)
 
 #ifdef CONFIG_LIBUKSCHED_DEBUG
 	// uk_pr_debug("[unicontainer]uk_sched_thread_switch(): debug0\n");
+	UK_ASSERT(prev->ctx);
 	uk_pr_debug("[unicontainer]uk_sched_thread_switch(): prev->ctx.sp is %llu, prev->ctx.ip is %llu\n", prev->ctx.sp, prev->ctx.ip);
+	UK_ASSERT(next->ctx);
 	uk_pr_debug("[unicontainer]uk_sched_thread_switch(): next->ctx.sp is %llu, next->ctx.ip is %llu\n", next->ctx.sp, next->ctx.ip);
 #endif /* CONFIG_LIBUKSCHED_DEBUG */
 

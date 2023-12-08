@@ -236,7 +236,7 @@ static void _uk_thread_struct_init(struct uk_thread *t,
 
 	memset(t, 0x0, sizeof(*t));
 
-	t->ectx = ectx;
+	t->ectx = ectx;	// 在这里给新线程的各个成员赋值
 	t->tlsp = tlsp;
 	t->name = name;
 	t->priv = priv;
@@ -352,7 +352,9 @@ int uk_thread_init_bare_fn2(struct uk_thread *t,
 	return _uk_thread_call_inittab(t);
 }
 
-/** Initializes uk_thread struct and allocates stack & TLS */
+/** Initializes uk_thread struct and allocates stack & TLS
+ * 初始化 uk_thread 结构并分配堆栈和 TLS
+ */
 static int _uk_thread_struct_init_alloc(struct uk_thread *t,
 					struct uk_alloc *a_stack,
 					size_t stack_len,
@@ -620,6 +622,7 @@ struct uk_thread *uk_thread_create_bare(struct uk_alloc *a,
 
 /** Allocates `struct uk_thread` along with stack and TLS but do not initialize
  *  the architecture context with an entry function (set to NULL)
+ * 分配 struct uk_thread 以及堆栈和 TLS，但不初始化架构上下文的入口函数（设置为 NULL）
  */
 struct uk_thread *uk_thread_create_container(struct uk_alloc *a,
 					     struct uk_alloc *a_stack,
@@ -639,9 +642,9 @@ struct uk_thread *uk_thread_create_container(struct uk_alloc *a,
 	 *       struct uk_thread within the same allocation
 	 *       when no TLS was requested but ectx support
 	 */
-	t_size = sizeof(*t);
+	t_size = sizeof(*t);	// 这里 t_size 是 struct uk_thread 的大小
 	if (!no_ectx && !a_uktls)
-		t_size += ukarch_ectx_size() + ukarch_ectx_align();
+		t_size += ukarch_ectx_size() + ukarch_ectx_align();	// extended context 的大小和架构相关（？）
 
 	t = uk_malloc(a, t_size);	// 给新的 struct uk_thread 分配空间？
 	if (!t)
