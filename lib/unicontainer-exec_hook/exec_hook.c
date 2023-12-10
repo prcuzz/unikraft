@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <uk/print.h>
 #include <uk/arch/lcpu.h>
+#include <uk/thread.h>
+#include <uk/semaphore.h>
 #include "exec_hook.h"
 
 /* 
@@ -65,10 +67,15 @@ int exec_hook(struct __regs *r){
     char *ret_context = NULL;
     unsigned int i = 0;
     long ret;
+    struct uk_thread *t;
 
     // if(SYS_exit_group == r->rsyscall){
     //     UK_CRASH("[unicontainer]exit_group() Exiting\n");
     // }
+
+    t = uk_thread_current();
+    UK_ASSERT(t);
+    uk_semaphore_up(t->parent->vfork_sem);
 
     uk_pr_debug("[unicontainer]ZZZZZZZZZZZZZZZZZZZZZZZZZC\n");
     uk_pr_debug("[unicontainer]syscall number:%lu, arg0:%lu, arg1:%lu, arg2:%lu\n", r->rax, r->rdi, r->rsi, r->rdx);
@@ -93,9 +100,9 @@ int exec_hook(struct __regs *r){
     uk_pr_debug("[unicontainer]return context from kvm vmcall: %s\n", ret_context);
     strcpy(ret_context, "[unicontainer]exec_hook() debug, if you see this message in the official version, change the code of exec_hook().\n");
     // write(1, ret_context, strlen(ret_context));
-    uk_syscall_r_write(1, ret_context, strlen(ret_context));
+    // uk_syscall_r_write(1, ret_context, strlen(ret_context));
+    uk_syscall_r_write(4, ret_context, strlen(ret_context));    // 这里把4写死了，但实际上 pipe 的两个文件描述符不一定是3和4
     // write(1, "\n", strlen("\n"));
-    uk_syscall_r_write(1, "\n", strlen("\n"));
 
     free(ret_context);
 

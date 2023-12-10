@@ -692,14 +692,15 @@ UK_SYSCALL_R_DEFINE(ssize_t, writev,
 	int error;
 
 	trace_vfs_writev(fd, vec, vlen);
-	error = fget(fd, &fp);
+	error = fget(fd, &fp);	// 用 fd 获取 fp
 	if (error) {
 		error = -error;
 		goto out_error;
 	}
 
-	/* Check if the file has not already been written to and
+	/** Check if the file has not already been written to and
 	 * that it is not a character device.
+	 * 检查文件是否已被写入，是否不是字符设备。
 	 */
 	if (fp->f_offset < 0 &&
 	   (fp->f_dentry == NULL ||
@@ -740,7 +741,7 @@ UK_SYSCALL_R_DEFINE(ssize_t, write, int, fd, const void *, buf, size_t, count)
 			.iov_len	= count,
 	};
 	trace_vfs_write(fd, buf, count);
-	bytes = uk_syscall_r_writev((long) fd, (long) &iov, 1);
+	bytes = uk_syscall_r_writev((long) fd, (long) &iov, 1);	// bytes 应该是成功写入的字节数？
 	if (bytes < 0)
 		trace_vfs_write_err(errno);
 	else
@@ -2154,6 +2155,14 @@ out_error:
 
 UK_SYSCALL_R_DEFINE(int, dup2, int, oldfd, int, newfd)
 {
+#ifdef CONFIG_LIBEXECHOOK
+	/** ZZC：
+	 * clone 时必须要带 CLONE_FS，这导致 pipe2 + clone + dup2 + execve 的系统调用组合会破坏父进程的标准输出；
+	 * 我们在这里粗暴地使 dup2 无效化了，但最合理的做法是完善 clone，使其没有限制。
+	 */
+	return newfd;
+#endif /* CONFIG_LIBEXECHOOK */
+
 	struct vfscore_file *fp;
 	int error;
 

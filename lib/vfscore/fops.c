@@ -104,7 +104,7 @@ int vfs_write(struct vfscore_file *fp, struct uio *uio, int flags)
 	if ((flags & FOF_OFFSET) == 0)
 		uio->uio_offset = fp->f_offset;
 
-	error = VOP_WRITE(vp, uio, ioflags);
+	error = VOP_WRITE(vp, uio, ioflags);	// stdio_write()
 	if (!error) {
 		count = bytes - uio->uio_resid;
 		if (!(flags & FOF_OFFSET) &&
