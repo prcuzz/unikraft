@@ -543,14 +543,21 @@ UK_LLSYSCALL_R_DEFINE(int, clone,
 #endif /* !CONFIG_ARCH_X86_64 */
 {
 #ifdef CONFIG_LIBEXECHOOK
-	/** 
+	/** ZZC:
 	 * 如果 clone 的 flag 只有 CLONE_VM | CLONE_VFORK，那一般接下来就要做 execve 了，这种情况就是我们的 exec_hook 需要处理的；
 	 * 但 unikraft 又要求 clone 时必须有 CLONE_FS | CLONE_FILES，所以额外加上；
 	 * 如果不加 CLONE_SETTLS 跑很多标准库函数时会报错。
 	 * 0x11 是 SIGCHLD。
+	 * 
+	 * 另外也有用 CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID 作为 flag 来完成 clone + execve 的情况,
+	 * 这里做了一点点处理,但不完善。
 	 * */
-	if((flags == (CLONE_VM | CLONE_VFORK)) || (flags == (CLONE_VM | CLONE_VFORK | 0x11))){
-		flags |= CLONE_FS | CLONE_FILES | CLONE_SETTLS;
+	if((flags == (CLONE_VM | CLONE_VFORK)) || (flags == (CLONE_VM | CLONE_VFORK | 0x11)) || (flags == (CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID | 0x11))){
+		flags |= CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SETTLS;
+	}
+	if(!sp){
+		// 这一段暂时没啥用
+		sp = (void*)malloc(1024 * 1024);
 	}
 #endif /* !CONFIG_LIBEXECHOOK */
 

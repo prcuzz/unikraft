@@ -96,7 +96,7 @@ void do_page_fault(struct __regs *regs, unsigned long error_code)
 	unsigned long vaddr = read_cr2();
 	struct ukarch_trap_ctx ctx = {regs, TRAP_page_fault, error_code, vaddr};
 
-	uk_pr_debug("Page fault, error code=0x%lx\n", error_code);
+	// uk_pr_debug("Page fault, error code=0x%lx\n", error_code);
 
 	rc = uk_raise_event(UKARCH_TRAP_PAGE_FAULT, &ctx);
 	if (unlikely(rc < 0))

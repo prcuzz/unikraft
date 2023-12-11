@@ -1,22 +1,21 @@
 #include <stdlib.h>
+#include <string.h>
 #include <uk/print.h>
 #include <uk/arch/lcpu.h>
 #include <uk/thread.h>
 #include <uk/semaphore.h>
 #include "exec_hook.h"
 
-/* 
-execve definition:
-     int execve(const char *filename, char *const argv[], char *const envp[]);
-
-original rip for user programs: rcx
-system call number: orig_rax
-64-bit register parameter passing order: rdi, rsi, rdx, r10, r8, r9
-return value: rax
-
-VMCALL nr: rax
-VMCALL parameter: rbx, rcx, rdx, rsi 
-*/
+/** execve definition:
+ *      int execve(const char *filename, char *const argv[], char *const envp[]);
+ * original rip for user programs: rcx
+ * system call number: orig_rax
+ * 64-bit register parameter passing order: rdi, rsi, rdx, r10, r8, r9
+ * return value: rax
+ * 
+ * VMCALL nr: rax
+ * VMCALL parameter: rbx, rcx, rdx, rsi 
+ */
 
 #define NULL                        ((void *) 0)
 #define KVM_HC_CLOCK_PAIRING		9
@@ -24,16 +23,6 @@ VMCALL parameter: rbx, rcx, rdx, rsi
 #define DATA_SIZE                   600
 #define SYS_exit_group              94
 
-static inline long kvm_hypercall2(unsigned int nr, unsigned long p1,
-                  unsigned long p2)
-{
-    long ret;
-    asm volatile("vmcall"
-             : "=a"(ret)
-             : "a"(nr), "b"(p1), "c"(p2)
-             : "memory");
-    return ret;
-}
 
 static inline long kvm_hypercall3(unsigned int nr, unsigned long p1,
                   unsigned long p2, unsigned long p3)
@@ -99,10 +88,10 @@ int exec_hook(struct __regs *r){
     uk_pr_debug("[unicontainer]return value from kvm vmcall: %ld\n", ret);
     uk_pr_debug("[unicontainer]return context from kvm vmcall: %s\n", ret_context);
     strcpy(ret_context, "[unicontainer]exec_hook() debug, if you see this message in the official version, change the code of exec_hook().\n");
-    // write(1, ret_context, strlen(ret_context));
+
     // uk_syscall_r_write(1, ret_context, strlen(ret_context));
-    uk_syscall_r_write(4, ret_context, strlen(ret_context));    // 这里把4写死了，但实际上 pipe 的两个文件描述符不一定是3和4
-    // write(1, "\n", strlen("\n"));
+    // uk_syscall_r_write(4, ret_context, strlen(ret_context));    // 这里把4写死了，但实际上 pipe 的两个文件描述符不一定是3和4
+    uk_syscall_r_write(7, ret_context, strlen(ret_context));
 
     free(ret_context);
 
