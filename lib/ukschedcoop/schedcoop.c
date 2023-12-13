@@ -37,6 +37,12 @@
 #include <uk/schedcoop.h>
 #include <uk/essentials.h>
 
+#ifdef CONFIG_LIBLWIP
+#define RESIDENT_THREADS_NUM 4
+#else
+#define RESIDENT_THREADS_NUM 2
+#endif
+
 struct schedcoop {
 	struct uk_sched sched;
 	struct uk_thread_list run_queue;
@@ -61,7 +67,7 @@ static void schedcoop_schedule(struct uk_sched *s)
 	struct uk_thread *prev, *next, *thread, *tmp;
 	__snsec now, min_wakeup_time;
 	unsigned long flags;
-	static unsigned int thread_list_size_is_greater_than_2_once = 0;
+	static unsigned int start_executing_user_program = 0;
 	unsigned int thread_list_size = 0;
 
 	if (unlikely(ukplat_lcpu_irqs_disabled()))
@@ -144,26 +150,26 @@ static void schedcoop_schedule(struct uk_sched *s)
 	// uk_pr_warn("[unicontainer]UK_TAILQ_EMPTY(&c->run_queue) is %u\n", UK_TAILQ_EMPTY(&c->run_queue));
 	// uk_pr_warn("[unicontainer]UK_TAILQ_EMPTY(&c->sleep_queue) is %u\n", UK_TAILQ_EMPTY(&c->sleep_queue));
 
-	uk_pr_debug("[unicontainer]prev->name is %s\n", prev->name);
-	if(next){
-		uk_pr_debug("[unicontainer]next->name is %s\n", next->name);
-	}
+	// uk_pr_debug("[unicontainer]prev->name is %s\n", prev->name);
+	// if(next){
+	// 	uk_pr_debug("[unicontainer]next->name is %s\n", next->name);
+	// }
 
-	if(!UK_TAILQ_EMPTY(&c->run_queue)){
-		uk_pr_debug("[unicontainer]run_queue is:");
-		UK_TAILQ_FOREACH(thread, &c->run_queue, queue){
-			uk_pr_debug(" %s", thread->name);
-		}
-		uk_pr_debug("\n");
-	}
+	// if(!UK_TAILQ_EMPTY(&c->run_queue)){
+	// 	uk_pr_debug("[unicontainer]run_queue is:");
+	// 	UK_TAILQ_FOREACH(thread, &c->run_queue, queue){
+	// 		uk_pr_debug(" %s", thread->name);
+	// 	}
+	// 	uk_pr_debug("\n");
+	// }
 
-	if(!UK_TAILQ_EMPTY(&c->sleep_queue)){
-		uk_pr_debug("[unicontainer]sleep_queue is:");
-		UK_TAILQ_FOREACH(thread, &c->sleep_queue, queue){
-			uk_pr_debug(" %s", thread->name);
-		}
-		uk_pr_debug("\n");
-	}	
+	// if(!UK_TAILQ_EMPTY(&c->sleep_queue)){
+	// 	uk_pr_debug("[unicontainer]sleep_queue is:");
+	// 	UK_TAILQ_FOREACH(thread, &c->sleep_queue, queue){
+	// 		uk_pr_debug(" %s", thread->name);
+	// 	}
+	// 	uk_pr_debug("\n");
+	// }	
 
 	uk_pr_debug("[unicontainer]thread_list is:");
 	UK_TAILQ_FOREACH(thread, &s->thread_list, thread_list){
@@ -180,14 +186,15 @@ static void schedcoop_schedule(struct uk_sched *s)
 		thread_list_size++;
 	}	
 
-	if (thread_list_size_is_greater_than_2_once == 0 && thread_list_size > 2)
+	// thread_list 第一次有多于 RESIDENT_THREADS_NUM 个成员, 就把 start_executing_user_program 设置为1；RESIDENT_THREADS_NUM 的值与是否用到 lwip 库有关
+	if (start_executing_user_program == 0 && thread_list_size > RESIDENT_THREADS_NUM)
 	{
-		thread_list_size_is_greater_than_2_once = 1;	// thread_list 第一次有多于2个成员, 就把 thread_list_size_is_greater_than_2_once 设置为1
+		start_executing_user_program = 1;
 	}
 
-	if (thread_list_size <= 2 && thread_list_size_is_greater_than_2_once == 1)
+	if (thread_list_size <= RESIDENT_THREADS_NUM && start_executing_user_program == 1)
 	{
-		// thread_list_size_is_greater_than_2_once 为1，说明 thread_list 的成员数量有过大于2的时候，现在变回2了，说明用户程序执行完了
+		// start_executing_user_program 为1，说明 thread_list 的成员数量有过大于2的时候，现在变回2了，说明用户程序执行完了
 		UK_CRASH("[unicontainer]schedcoop_schedule() exit\n");
 	}
 	// 本思路进行了简单尝试，是成功的
