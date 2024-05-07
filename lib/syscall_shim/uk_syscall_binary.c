@@ -46,6 +46,7 @@
 #if CONFIG_LIBSYSCALL_SHIM_STRACE
 #include <uk/plat/console.h> /* ukplat_coutk */
 #endif /* CONFIG_LIBSYSCALL_SHIM_STRACE */
+#include <netinet/in.h> // ZZC
 
 
 
@@ -106,6 +107,41 @@ void ukplat_syscall_handler(struct __regs *r)
 		;
 	}
 #endif /* CONFIG_LIBEXECHOOK */
+
+	// ZZC: Test code to change unix socket to tcp socket
+	// AF_INET 2
+	// AF_UNIX 1
+	// socket syscall NR 41
+	// connect syscall NR 42
+
+	// if((r->rsyscall == SYS_socket) && (r->rarg0 == 1)){
+	// 	r->rarg0 = 2;
+	// }
+
+	// if((r->rsyscall == SYS_connect)){
+	// 	struct sockaddr {
+	// 		sa_family_t sa_family;
+	// 		char sa_data[14];
+	// 	} servaddr;
+
+	// 	// AF_INET, 172.44.0.2:8000
+	// 	((struct sockaddr *)(r->rarg1))->sa_family = 2;
+    // 	((struct sockaddr *)(r->rarg1))->sa_data[0] = '\037';
+	// 	((struct sockaddr *)(r->rarg1))->sa_data[1] = '@';
+	// 	((struct sockaddr *)(r->rarg1))->sa_data[2] = '\254';
+	// 	((struct sockaddr *)(r->rarg1))->sa_data[3] = ',';
+	// 	((struct sockaddr *)(r->rarg1))->sa_data[4] = '\000';
+	// 	((struct sockaddr *)(r->rarg1))->sa_data[5] = '\002';
+	// 	((struct sockaddr *)(r->rarg1))->sa_data[6] = '\000';
+	// 	((struct sockaddr *)(r->rarg1))->sa_data[7] = '\000';
+	// 	((struct sockaddr *)(r->rarg1))->sa_data[8] = '\000';
+	// 	((struct sockaddr *)(r->rarg1))->sa_data[9] = '\000';
+	// 	((struct sockaddr *)(r->rarg1))->sa_data[10] = '\000';
+	// 	((struct sockaddr *)(r->rarg1))->sa_data[11] = '\000';
+	// 	((struct sockaddr *)(r->rarg1))->sa_data[12] = '\000';
+ 		
+	// 	r->rarg2 = sizeof(struct sockaddr);
+	// }
 // ZZC-end
 
 	r->rret0 = uk_syscall6_r(r->rsyscall,
